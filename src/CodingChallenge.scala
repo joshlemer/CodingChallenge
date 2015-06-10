@@ -50,16 +50,26 @@ object CodingChallenge extends App{
     .groupBy(v => v)
     .mapValues(v => v.toList.length)
 
-//  def avgConsumptionPerMonth = rowsVec
-//    .filter(row => row(columnNameToIndex("Bill Month") != None && ))
-  //println(breakdownByElecOrGas)
-  //println(breakdownByNumMeterReadings)
 
-//  println(rowsVec
-//    .filter(row => row(columnNameToIndex("ElecOrGas")) != None)
-//    .map(row => row(columnNameToIndex("ElecOrGas")))
-//    .distinct
-//  )
+  def avgConsumptionPerMonth = {
+    //Do Elec first
+    rowsVec
+      .filter(row => row(columnNameToIndex("ElecOrGas")) == Some("1") && row(columnNameToIndex("Bill Month")) != None && row(columnNameToIndex("Consumption")) != None)
 
+      //One row is badly formed, with "N" as its month, filter these out
+      .filter(row => row(columnNameToIndex("Bill Month")) match {
+        case Some(str) if str.matches("""\d{1,2}""") => true
+        case _ => false
+        })
+
+      .groupBy(row => row(columnNameToIndex("Bill Month")))
+      .mapValues(monthRows =>
+        monthRows.map(monthRow =>
+          monthRow(columnNameToIndex("Consumption")) match {
+            case Some(str) => str.toDouble
+            case None => throw new Exception("This row contains no consumption value")
+          }).sum)
+  }
+  println(avgConsumptionPerMonth)
 
 }
