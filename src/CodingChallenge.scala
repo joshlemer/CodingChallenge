@@ -4,18 +4,14 @@ import scala.collection.mutable
 object CodingChallenge extends App{
 
   val lines = Source.fromFile("smallSampleInput.csv").getLines().toStream
-  val columnsLine = lines.head
+  val columnsLine #:: rows = lines
+  
   val numColumns = columnsLine.split("""\|""").length
-  val rows = lines.tail
-  val columnIndexes: Map[Int, String] = (0 until numColumns).map(i => i -> columnsLine.split("""\|""").toList(i)).toMap
-  val columnNameToIndex: Map[String, Int] = columnsLine.split("""\|""").zipWithIndex.toMap
+  val colNameToIndex: Map[String, Int] = columnsLine.split("""\|""").zipWithIndex.toMap
   type Table = Vector[Vector[Option[String]]]
 
-  val writer = new PrintWriter(new File("test.txt"))
-  writer.write(rows.head.split("""\|""").toList.length.toString)
-  writer.close()
 
-  //Return a 2-d Vector of Option[Sting] values
+  //Create a 2-d Vector of Option[Sting] values representing the table of values
   val rowsVec: Table = rows.map(row => {
     val rowSplit = row.split("""\|""").map( element => element match {
       case "" => None
@@ -28,23 +24,23 @@ object CodingChallenge extends App{
   ).toVector
 
   def numUniqueCustomers = rowsVec
-    .filter(row => row(columnNameToIndex("CustID")) != None)
-    .map(row => row(columnNameToIndex("CustID")))
+    .filter(row => row(colNameToIndex("CustID")) != None)
+    .map(row => row(colNameToIndex("CustID")))
     .distinct
     .length
 
   def breakdownByElecOrGas = rowsVec
-    .filter(row => row(columnNameToIndex("ElecOrGas")) != None && row(columnNameToIndex("CustID")) != None)
-    .groupBy(row => row(columnNameToIndex("CustID")))
-    .mapValues(customerRows => customerRows map (customerRow => customerRow(columnNameToIndex("ElecOrGas"))))
+    .filter(row => row(colNameToIndex("ElecOrGas")) != None && row(colNameToIndex("CustID")) != None)
+    .groupBy(row => row(colNameToIndex("CustID")))
+    .mapValues(customerRows => customerRows map (customerRow => customerRow(colNameToIndex("ElecOrGas"))))
     .mapValues(elecOrGasVector => (elecOrGasVector contains Some("1"), elecOrGasVector contains Some("2")))
     .values
     .groupBy(v => v)
     .mapValues(v => v.toList.length)
 
   def breakdownByNumMeterReadings = rowsVec
-    .filter(row => row(columnNameToIndex("CustID")) != None)
-    .map(row => row(columnNameToIndex("CustID")))
+    .filter(row => row(colNameToIndex("CustID")) != None)
+    .map(row => row(colNameToIndex("CustID")))
     .groupBy(v => v)
     .mapValues(v => v.length).values
     .groupBy(v => v)
@@ -52,24 +48,34 @@ object CodingChallenge extends App{
 
 
   def avgConsumptionPerMonth = {
-    //Do Elec first
-    rowsVec
-      .filter(row => row(columnNameToIndex("ElecOrGas")) == Some("1") && row(columnNameToIndex("Bill Month")) != None && row(columnNameToIndex("Consumption")) != None)
+    def analyzeByResource(resource: String) =
+      rowsVec
+        .filter(row => row(colNameToIndex("ElecOrGas")) == Some(resource) && row(colNameToIndex("Bill Month")) != None && row(colNameToIndex("Consumption")) != None)
 
-      //One row is badly formed, with "N" as its month, filter these out
-      .filter(row => row(columnNameToIndex("Bill Month")) match {
-        case Some(str) if str.matches("""\d{1,2}""") => true
-        case _ => false
-        })
+        //One row is badly formed, with "N" as its month, filter these out
+        .filter(row => row(colNameToIndex("Bill Month")) match {
+          case Some(str) if str.matches("""\d{1,2}""") => true
+          case _ => false
+          })
 
-      .groupBy(row => row(columnNameToIndex("Bill Month")))
-      .mapValues(monthRows =>
-        monthRows.map(monthRow =>
-          monthRow(columnNameToIndex("Consumption")) match {
-            case Some(str) => str.toDouble
-            case None => throw new Exception("This row contains no consumption value")
-          }).sum)
+        .groupBy(row => row(colNameToIndex("Bill Month")))
+        .mapValues(monthRows =>
+          monthRows.map(monthRow =>
+            monthRow(colNameToIndex("Consumption")) match {
+              case Some(str) => str.toDouble
+              case None => throw new Exception("This row contains no consumption value")
+            }).sum)
+
+    Map("1" -> analyzeByResource("1"), "2" -> analyzeByResource("2"))
   }
-  println(avgConsumptionPerMonth)
+
+  def performAnalysis(): Unit = {
+      val writer = new PrintWriter(new File("results.txt"))
+      //writer.write("foo")
+      writer.close()
+  }
+
+  performAnalysis()
 
 }
+
