@@ -54,7 +54,9 @@ object CodingChallenge extends App{
   def avgConsumptionPerMonth = {
     def breakdownByResource(resource: String) =
       rowsVec
-        .filter(row => row(colNameToIndex("ElecOrGas")) == Some(resource) && row(colNameToIndex("Bill Month")) != None && row(colNameToIndex("Consumption")) != None)
+        .filter(row => row(colNameToIndex("ElecOrGas")) == Some(resource) &&
+        row(colNameToIndex("Bill Month")) != None && row(colNameToIndex("Consumption")) != None &&
+        row(colNameToIndex("Bill Year")) != None)
 
         //One row is badly formed, with "N" as its month, filter these out
         .filter(row => row(colNameToIndex("Bill Month")) match {
@@ -62,13 +64,29 @@ object CodingChallenge extends App{
           case _ => false
           })
 
+        //One row has Bill Year value of "1", filter these out
+        .filter(row => row(colNameToIndex("Bill Year")) match {
+          case Some(str) => str.matches("""\d{4}""")
+          case _ => false
+        })
+
         .groupBy(row => row(colNameToIndex("Bill Month")))
-        .mapValues(monthRows =>
-          monthRows.map(monthRow =>
-            monthRow(colNameToIndex("Consumption")) match {
-              case Some(str) => str.toDouble
-              case None => throw new Exception("This row contains no consumption value")
-            }).sum)
+
+        //map Some("1") -> List( sum_of_jan_2011, sum_of_jan_2012, ...)
+        //    Some("2") -> List( sum_of_feb_2011, sum_of_feb_2009, ...)
+        .mapValues(monthRows => {
+          monthRows
+            .groupBy(row => row(colNameToIndex("Bill Year")))
+            .mapValues(monthAndYearRows =>
+              monthAndYearRows.map(monthAndYearRow =>
+                monthAndYearRow(colNameToIndex("Consumption")) match {
+                  case Some(str) => str.toDouble
+                  case _ => 0
+                }
+              ).sum
+            ).values.toList
+        })
+        .mapValues(monthSums => monthSums.sum / monthSums.length )
 
     Map("1" -> breakdownByResource("1"), "2" -> breakdownByResource("2"))
   }
