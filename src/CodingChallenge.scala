@@ -1,6 +1,6 @@
 import scala.io.Source
 import java.io._
-import scala.collection.mutable
+
 object CodingChallenge extends App{
 
   val lines = Source.fromFile("smallSampleInput.csv").getLines().toStream
@@ -150,7 +150,5 @@ object CodingChallenge extends App{
   }
 
   performAnalysis()
-  println("HEllo World")
-
 }
 
