@@ -1,0 +1,48 @@
+Number of unique customers:
+	200
+
+Breakdown by Electricity or Gas
+	Electricity only:
+		177
+	Gas only:
+		22
+	Both only:
+		1
+
+Breakdown by number of readings
+	Electricity
+		Number of meter readings: Number of customers
+			7: 1
+			25: 177
+	Gas
+		Number of meter readings: Number of customers
+			17: 1
+			25: 22
+
+Average consumption per Bill Month
+	Electricity
+		January (all years): 1.05194242E8
+		February (all years): 5088164.0
+		March (all years): 5004025.0
+		April (all years): 4883611.0
+		May (all years): 4552533.0
+		June (all years): 6991181.0
+		July (all years): 4172595.0
+		August (all years): 4215116.0
+		September (all years): 4281328.0
+		October (all years): 4568909.0
+		November (all years): 4823160.0
+		December (all years): 5254528.0
+	Gas
+		January (all years): 10700.5
+		February (all years): 10730.5
+		March (all years): 8726.6
+		April (all years): 7236.5
+		May (all years): 3467.0
+		June (all years): 3175.7000000000003
+		July (all years): 1620.7
+		August (all years): 1407.3000000000002
+		September (all years): 1576.5999999999997
+		October (all years): 2028.9999999999998
+		November (all years): 5318.999999999998
+		December (all years): 8168.000000000003

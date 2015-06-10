@@ -38,17 +38,21 @@ object CodingChallenge extends App{
     .groupBy(v => v)
     .mapValues(v => v.toList.length)
 
-  def breakdownByNumMeterReadings = rowsVec
-    .filter(row => row(colNameToIndex("CustID")) != None)
-    .map(row => row(colNameToIndex("CustID")))
-    .groupBy(v => v)
-    .mapValues(v => v.length).values
-    .groupBy(v => v)
-    .mapValues(v => v.toList.length)
+  def breakdownByNumMeterReadings = {
+    def breakdownByResource(resource: String) =
+      rowsVec
+        .filter(row => row(colNameToIndex("CustID")) != None && row(colNameToIndex("ElecOrGas")) == Some(resource))
+        .map(row => row(colNameToIndex("CustID")))
+        .groupBy(v => v)
+        .mapValues(v => v.length).values
+        .groupBy(v => v)
+        .mapValues(v => v.toList.length)
 
+    Map("1" -> breakdownByResource("1"), "2" -> breakdownByResource("2"))
+  }
 
   def avgConsumptionPerMonth = {
-    def analyzeByResource(resource: String) =
+    def breakdownByResource(resource: String) =
       rowsVec
         .filter(row => row(colNameToIndex("ElecOrGas")) == Some(resource) && row(colNameToIndex("Bill Month")) != None && row(colNameToIndex("Consumption")) != None)
 
@@ -66,16 +70,87 @@ object CodingChallenge extends App{
               case None => throw new Exception("This row contains no consumption value")
             }).sum)
 
-    Map("1" -> analyzeByResource("1"), "2" -> analyzeByResource("2"))
+    Map("1" -> breakdownByResource("1"), "2" -> breakdownByResource("2"))
   }
 
   def performAnalysis(): Unit = {
       val writer = new PrintWriter(new File("results.txt"))
-      //writer.write("foo")
+
+      //Part 1
+      writer.println("Number of unique customers:\n\t" + numUniqueCustomers)
+      writer.println()
+
+      //Part 2
+      val elecOrGas = breakdownByElecOrGas
+      writer.println("Breakdown by Electricity or Gas")
+      if(elecOrGas contains (true, false)) writer.println("\tElectricity only:\n\t\t" + elecOrGas((true,false)))
+      if(elecOrGas contains (false, true)) writer.println("\tGas only:\n\t\t" + elecOrGas((false,true)))
+      if(elecOrGas contains (true, true)) writer.println("\tBoth only:\n\t\t" + elecOrGas((true,true)))
+      writer.println()
+
+      //part 3
+      val numReadings = breakdownByNumMeterReadings
+      val elecNumReadings = numReadings("1").toVector.sortBy(keyValPair => keyValPair._1)
+      val gasNumReadings = numReadings("2").toVector.sortBy(keyValPair => keyValPair._1)
+
+      writer.println("Breakdown by number of readings")
+
+      writer.println("\tElectricity\n\t\tNumber of meter readings: Number of customers")
+      elecNumReadings.foreach{ keyValPair =>
+        writer.println("\t\t\t" + keyValPair._1 + ": " + keyValPair._2)
+      }
+
+      writer.println("\tGas\n\t\tNumber of meter readings: Number of customers")
+      gasNumReadings.foreach{ keyValPair =>
+        writer.println("\t\t\t" + keyValPair._1 + ": " + keyValPair._2)
+      }
+
+      writer.println()
+
+      //part 4
+      writer.println("Average consumption per Bill Month")
+
+      val monthNumToName = Map(
+        1 -> "January",   2 -> "February",  3 -> "March",     4 -> "April",
+        5 -> "May",       6 -> "June",      7 -> "July",      8 -> "August",
+        9 -> "September", 10 -> "October",  11 -> "November", 12 -> "December"
+      )
+
+      val avgConsumption = avgConsumptionPerMonth
+      //This is dangerous if there are values of bill month that aren't convertible to ints,
+      //however this doesn't seem to be the case for this data set
+      val elecAvgConsumption = avgConsumption("1").toVector.sortBy(keyValPair => keyValPair._1.getOrElse("-1").toInt)
+      val gasAvgConsumption = avgConsumption("2").toVector.sortBy(keyValPair => keyValPair._1.getOrElse("-1").toInt)
+
+      writer.println("\tElectricity")
+      elecAvgConsumption.foreach{
+        keyValPair =>
+          try {
+            val monthNum = keyValPair._1.getOrElse("-1").toInt
+            if (monthNumToName contains monthNum)
+              writer.println("\t\t" + monthNumToName(monthNum) + " (all years): " + keyValPair._2)
+          } catch {
+            case e: Exception => None
+          }
+      }
+
+      writer.println("\tGas")
+      gasAvgConsumption.foreach{
+        keyValPair =>
+          try {
+            val monthNum = keyValPair._1.getOrElse("-1").toInt
+            if (monthNumToName contains monthNum)
+              writer.println("\t\t" + monthNumToName(monthNum) + " (all years): " + keyValPair._2)
+          } catch {
+            case e: Exception => None
+          }
+      }
+
       writer.close()
   }
 
   performAnalysis()
+  println("HEllo World")
 
 }
 
