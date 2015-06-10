@@ -33,6 +33,33 @@ object CodingChallenge extends App{
     .distinct
     .length
 
-  println(numUniqueCustomers)
+  def breakdownByElecOrGas = rowsVec
+    .filter(row => row(columnNameToIndex("ElecOrGas")) != None && row(columnNameToIndex("CustID")) != None)
+    .groupBy(row => row(columnNameToIndex("CustID")))
+    .mapValues(customerRows => customerRows map (customerRow => customerRow(columnNameToIndex("ElecOrGas"))))
+    .mapValues(elecOrGasVector => (elecOrGasVector contains Some("1"), elecOrGasVector contains Some("2")))
+    .values
+    .groupBy(v => v)
+    .mapValues(v => v.toList.length)
+
+  def breakdownByNumMeterReadings = rowsVec
+    .filter(row => row(columnNameToIndex("CustID")) != None)
+    .map(row => row(columnNameToIndex("CustID")))
+    .groupBy(v => v)
+    .mapValues(v => v.length).values
+    .groupBy(v => v)
+    .mapValues(v => v.toList.length)
+
+//  def avgConsumptionPerMonth = rowsVec
+//    .filter(row => row(columnNameToIndex("Bill Month") != None && ))
+  //println(breakdownByElecOrGas)
+  //println(breakdownByNumMeterReadings)
+
+//  println(rowsVec
+//    .filter(row => row(columnNameToIndex("ElecOrGas")) != None)
+//    .map(row => row(columnNameToIndex("ElecOrGas")))
+//    .distinct
+//  )
+
 
 }
